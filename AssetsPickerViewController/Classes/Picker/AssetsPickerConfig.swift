@@ -9,8 +9,7 @@
 import UIKit
 import Photos
 
-@objcMembers
-open class AssetsPickerConfig : NSObject {
+open class AssetsPickerConfig {
 
     // MARK: - Localized Strings Config
 
@@ -69,6 +68,14 @@ open class AssetsPickerConfig : NSObject {
     open var albumLandscapeForcedCellWidth: CGFloat?
     open var albumLandscapeForcedCellHeight: CGFloat?
     open var albumLandscapeCellSize: CGSize = .zero
+    open var limitedAccessPopupTitle: String?
+    open var manageText: String?
+    open var limitedAccessText: String?
+    open var selectPhotoText: String?
+    open var modifySettingsText: String?
+    open var cancelText: String?
+    open var limitedDisclamerTextColor: UIColor?
+    open var limitedDiscalmerBackgroundcolor: UIColor?
     
     func albumItemSpace(isPortrait: Bool) -> CGFloat {
         let size = isPortrait ? UIScreen.main.portraitSize : UIScreen.main.landscapeSize
@@ -94,7 +101,6 @@ open class AssetsPickerConfig : NSObject {
     open var assetIsForcedSelectAssetFromCamera: Bool = true
     
     // MARK: Fetch
-    open var isVideoAllowed: Bool = false
     open var assetFetchOptions: [PHAssetCollectionType: PHFetchOptions]?
     
     // MARK: Custom Layout
@@ -128,7 +134,7 @@ open class AssetsPickerConfig : NSObject {
         return CGSize(width: edge, height: edge)
     }
     
-    public override init() {}
+    public init() {}
     
     @discardableResult
     open func prepare() -> Self {
@@ -182,11 +188,7 @@ open class AssetsPickerConfig : NSObject {
                 NSSortDescriptor(key: "creationDate", ascending: true),
                 NSSortDescriptor(key: "modificationDate", ascending: true)
             ]
-            options.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-            if isVideoAllowed {
-                options.predicate = NSPredicate(format: "mediaType = %d OR mediaType = %d", PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue)
-            }
-            
+            options.predicate = NSPredicate(format: "mediaType = %d OR mediaType = %d", PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue)
             assetFetchOptions = [
                 .smartAlbum: options,
                 .album: options,

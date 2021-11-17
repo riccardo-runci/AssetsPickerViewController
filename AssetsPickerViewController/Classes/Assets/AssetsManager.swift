@@ -146,18 +146,18 @@ extension AssetsManager {
         if PHPhotoLibrary.authorizationStatus() == .authorized {
             completion(true)
         } else {
-            if #available(iOS 14, *) {
-                PHPhotoLibrary.requestAuthorization(for: .addOnly, handler: { (status) in
-                    DispatchQueue.main.async {
-                        switch status {
-                        case .authorized:
-                            completion(true)
-                        default:
-                            completion(false)
-                        }
-                    }
-                })
-            } else {
+//            if #available(iOS 14, *) {
+//                PHPhotoLibrary.requestAuthorization(for: .addOnly, handler: { (status) in
+//                    DispatchQueue.main.async {
+//                        switch status {
+//                        case .authorized:
+//                            completion(true)
+//                        default:
+//                            completion(false)
+//                        }
+//                    }
+//                })
+//            } else {
                 PHPhotoLibrary.requestAuthorization { (status) in
                     DispatchQueue.main.async {
                         switch status {
@@ -168,7 +168,7 @@ extension AssetsManager {
                         }
                     }
                 }
-            }
+        //    }
         }
     }
 }
@@ -478,20 +478,20 @@ extension AssetsManager {
     @discardableResult
     func notifyIfAuthorizationStatusChanged() -> Bool {
         var newStatus: PHAuthorizationStatus = .authorized
-        if #available(iOS 14, *) {
-            newStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-            let oldStatus = authorizationStatus
-            authorizationStatus = newStatus
-            if newStatus == .limited {
-                for subscriber in self.subscribers {
-                    DispatchQueue.main.async { [weak self] in
-                        guard let `self` = self else { return }
-                        subscriber.assetsManager(manager: self, authorizationStatusChanged: oldStatus, newStatus: newStatus)
-                    }
-                }
-                return false
-            }
-        } else {
+//        if #available(iOS 14, *) {
+//            newStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+//            let oldStatus = authorizationStatus
+//            authorizationStatus = newStatus
+//            if newStatus == .limited {
+//                for subscriber in self.subscribers {
+//                    DispatchQueue.main.async { [weak self] in
+//                        guard let `self` = self else { return }
+//                        subscriber.assetsManager(manager: self, authorizationStatusChanged: oldStatus, newStatus: newStatus)
+//                    }
+//                }
+//                return false
+//            }
+//        } else {
             newStatus = PHPhotoLibrary.authorizationStatus()
             if authorizationStatus != newStatus {
                 let oldStatus = authorizationStatus
@@ -502,14 +502,14 @@ extension AssetsManager {
                         subscriber.assetsManager(manager: self, authorizationStatusChanged: oldStatus, newStatus: newStatus)
                     }
                 }
-            }
+           // }
         }
         
-        if #available(iOS 14, *) {
-            return authorizationStatus == .authorized || authorizationStatus == .limited
-        } else {
+//        if #available(iOS 14, *) {
+//            return authorizationStatus == .authorized || authorizationStatus == .limited
+//        } else {
             return authorizationStatus == .authorized
-        }
+  //      }
     }
     
     func isCountChanged(changeDetails: PHFetchResultChangeDetails<PHAsset>) -> Bool {

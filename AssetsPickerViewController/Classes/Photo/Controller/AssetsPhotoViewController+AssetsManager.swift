@@ -14,18 +14,18 @@ extension AssetsPhotoViewController: AssetsManagerDelegate {
     public func assetsManagerFetched(manager: AssetsManager) {}
     
     public func assetsManager(manager: AssetsManager, authorizationStatusChanged oldStatus: PHAuthorizationStatus, newStatus: PHAuthorizationStatus) {
-        if #available(iOS 14, *) {
-            if newStatus == .limited {
-                updateNoPermissionView()
-                AssetsManager.shared.fetchAssets(isRefetch: true, completion: { [weak self] (_) in
-                    DispatchQueue.main.async { [weak self] in
-                        self?.collectionView.reloadData()
-                    }
-                })
-            } else {
-                updateNoPermissionView()
-            }
-        } else {
+//        if #available(iOS 14, *) {
+//            if newStatus == .limited {
+//                updateNoPermissionView()
+//                AssetsManager.shared.fetchAssets(isRefetch: true, completion: { [weak self] (_) in
+//                    DispatchQueue.main.async { [weak self] in
+//                        self?.collectionView.reloadData()
+//                    }
+//                })
+//            } else {
+//                updateNoPermissionView()
+//            }
+//        } else {
             if oldStatus != .authorized {
                 if newStatus == .authorized {
                     updateNoPermissionView()
@@ -38,7 +38,7 @@ extension AssetsPhotoViewController: AssetsManagerDelegate {
             } else {
                 updateNoPermissionView()
             }
-        }
+        //}
     }
     
     public func assetsManager(manager: AssetsManager, reloadedAlbumsInSection section: Int) {}

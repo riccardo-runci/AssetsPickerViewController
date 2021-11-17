@@ -18,6 +18,22 @@ open class AssetsPhotoViewController: UIViewController {
         return AssetsPickerConfig.statusBarStyle
     }
     
+    var isAccessLimited: Bool{
+        get{
+            if #available(iOS 14, *) {
+                #if targetEnvironment(macCatalyst)
+                return false
+                #else
+                let accessLevel: PHAccessLevel = .readWrite
+                let status = PHPhotoLibrary.authorizationStatus(for: accessLevel)
+                return status == .limited
+                #endif
+                
+            }
+            return false
+        }
+    }
+    
     // MARK: Properties
     var pickerConfig: AssetsPickerConfig!
     var previewing: UIViewControllerPreviewing?
@@ -161,6 +177,82 @@ open class AssetsPhotoViewController: UIViewController {
                 self.delegate?.assetsPickerCannotAccessPhotoLibrary?(controller: self.picker)
             }
         }
+        
+        if isAccessLimited {
+            let bannerHeight: CGFloat = 70
+            let topView = UIView()
+            view.addSubview(topView)
+            topView.translatesAutoresizingMaskIntoConstraints = false
+            topView.leadingAnchor.constraint(equalTo: collectionView.leadingAnchor, constant: 0).isActive = true
+            topView.trailingAnchor.constraint(equalTo: collectionView.trailingAnchor, constant: 0).isActive = true
+            topView.heightAnchor.constraint(equalToConstant: bannerHeight).isActive = true
+            
+            collectionView.contentInset = UIEdgeInsets(top: collectionView.contentInset.top + bannerHeight, left: collectionView.contentInset.left, bottom: collectionView.contentInset.right, right: collectionView.contentInset.bottom)
+            topView.backgroundColor = self.pickerConfig.limitedDiscalmerBackgroundcolor
+            DispatchQueue.main.async {
+                //topView.topAnchor.constraint(equalTo: self.collectionView.topAnchor, constant: abs(self.collectionView.contentInset.top) - 30).isActive = true
+                topView.topAnchor.constraint(equalTo: self.collectionView.topAnchor, constant: abs(self.topbarHeight)).isActive = true
+                
+                let button = UIButton()
+                topView.addSubview(button)
+                button.translatesAutoresizingMaskIntoConstraints = false
+                button.setTitle(self.pickerConfig.manageText, for: .normal)
+                button.setTitleColor(self.pickerConfig.limitedDisclamerTextColor, for: .normal)
+                button.centerYAnchor.constraint(equalTo: topView.centerYAnchor).isActive = true
+                button.trailingAnchor.constraint(equalTo: topView.trailingAnchor, constant: -20).isActive = true
+                button.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+                //button.titleLabel?.font = self.pickerConfig.manageTextFont
+                
+                let label = UILabel()
+                topView.addSubview(label)
+                label.translatesAutoresizingMaskIntoConstraints = false
+                label.adjustsFontSizeToFitWidth = true
+                label.centerYAnchor.constraint(equalTo: topView.centerYAnchor).isActive = true
+                label.textColor = self.pickerConfig.limitedDisclamerTextColor
+                label.numberOfLines = 2
+                label.leadingAnchor.constraint(equalTo: topView.leadingAnchor, constant: 20).isActive = true
+                label.trailingAnchor.constraint(equalTo: button.leadingAnchor, constant: -12).isActive = true
+                label.text = self.pickerConfig.limitedAccessText
+                label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+                //label.font = self.pickerConfig.limitedAccessTextFont
+                label.textAlignment = .left
+                label.minimumScaleFactor = 0.2
+                if #available(iOS 14, *) {
+                    button.addTarget(self, action: #selector(self.didButtonClick), for: .touchUpInside)
+                }
+            }
+        }
+    }
+    
+    @available(iOS 14, *)
+    @objc func didButtonClick(_ sender: UIButton) {
+        let actionSheet = UIAlertController(title: self.pickerConfig.limitedAccessPopupTitle, message: "", preferredStyle: UIAlertController.Style.actionSheet)
+        let selecPhoto = UIAlertAction(title: pickerConfig.selectPhotoText, style: .default) { (action: UIAlertAction) in
+            PHPhotoLibrary.shared().register(self)
+            #if targetEnvironment(macCatalyst)
+              //code to run on macOS
+            #else
+                PHPhotoLibrary.shared().presentLimitedLibraryPicker(from: self)
+            #endif
+            
+            
+        }
+        let settings = UIAlertAction(title: pickerConfig.modifySettingsText, style: .default) { (action: UIAlertAction) in
+            UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+        }
+        
+        let continueSheet = UIAlertAction(title: pickerConfig.cancelText, style: .cancel) { (action: UIAlertAction) in
+        }
+
+        actionSheet.addAction(selecPhoto)
+        actionSheet.addAction(settings)
+        actionSheet.addAction(continueSheet)
+        if let popoverController = actionSheet.popoverPresentationController {
+            popoverController.sourceView = self.view
+            popoverController.sourceRect = CGRect(x: self.view.bounds.midX, y: self.view.bounds.midY, width: 0, height: 0)
+            popoverController.permittedArrowDirections = []
+        }
+        self.present(actionSheet, animated: true, completion: nil)
     }
     
     override open func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -267,6 +359,27 @@ extension UICollectionView {
         return self.visibleCells.filter { cell in
             let cellRect = self.convert(cell.frame, to: self.superview)
             return self.frame.contains(cellRect)
+        }
+    }
+}
+
+extension UIViewController {
+
+    /**
+     *  Height of status bar + navigation bar (if navigation bar exist)
+     */
+
+    var topbarHeight: CGFloat {
+        return //UIApplication.shared.statusBarFrame.size.height +
+            (self.navigationController?.navigationBar.frame.height ?? 0.0)
+    }
+}
+
+extension AssetsPhotoViewController: PHPhotoLibraryChangeObserver{
+    public func photoLibraryDidChange(_ changeInstance: PHChange) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.setupAssets()
+
         }
     }
 }
